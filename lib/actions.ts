@@ -89,7 +89,7 @@ async function uploadBlob(file: File, folder: string, allowed: string[], maxByte
   if (!file.size) return null;
   if (file.size > maxBytes || !allowed.includes(file.type)) throw new Error("Archivo no permitido o demasiado grande");
   const extension = file.name.split(".").pop()?.replace(/[^a-zA-Z0-9]/g, "") || "bin";
-  return put(`${folder}/${crypto.randomUUID()}.${extension}`, file, { access: "public", addRandomSuffix: false });
+  return put(`${folder}/${crypto.randomUUID()}.${extension}`, file, { access: "private", addRandomSuffix: false });
 }
 
 export async function saveInterventor(formData: FormData) {
@@ -109,7 +109,7 @@ export async function saveInterventor(formData: FormData) {
   const old = id ? (await db.select().from(interventores).where(eq(interventores.id, id)).limit(1))[0] : null;
   const file = formData.get("photo");
   const uploaded = file instanceof File ? await uploadBlob(file, "interventores", ["image/jpeg", "image/png", "image/webp"], 4 * 1024 * 1024) : null;
-  const values = { ...parsed, municipality: parsed.municipality || null, internalNotes: parsed.internalNotes || null, photoUrl: uploaded?.url ?? old?.photoUrl ?? null, photoPathname: uploaded?.pathname ?? old?.photoPathname ?? null, updatedAt: new Date() };
+  const values = { ...parsed, municipality: parsed.municipality || null, internalNotes: parsed.internalNotes || null, photoUrl: uploaded ? null : old?.photoUrl ?? null, photoPathname: uploaded?.pathname ?? old?.photoPathname ?? null, updatedAt: new Date() };
   if (old) await db.update(interventores).set(values).where(eq(interventores.id, id));
   else await db.insert(interventores).values({ ...values, verificationHash: verificationCode() });
   if (uploaded && old?.photoPathname) await del(old.photoPathname).catch(() => undefined);
@@ -134,7 +134,7 @@ export async function saveContent(formData: FormData) {
   const old = id ? (await db.select().from(contentItems).where(eq(contentItems.id, id)).limit(1))[0] : null;
   const file = formData.get("document");
   const uploaded = file instanceof File ? await uploadBlob(file, "documentos", ["application/pdf", "image/jpeg", "image/png", "image/webp"], 12 * 1024 * 1024) : null;
-  const values = { ...parsed, subtitle: parsed.subtitle || null, summary: parsed.summary || null, fileUrl: uploaded?.url ?? (parsed.fileUrl || old?.fileUrl || null), filePathname: uploaded?.pathname ?? old?.filePathname ?? null, eventDate: parsed.eventDate || null, isPublished: formData.get("isPublished") === "on", updatedAt: new Date() };
+  const values = { ...parsed, subtitle: parsed.subtitle || null, summary: parsed.summary || null, fileUrl: uploaded ? null : (parsed.fileUrl || old?.fileUrl || null), filePathname: uploaded?.pathname ?? old?.filePathname ?? null, eventDate: parsed.eventDate || null, isPublished: formData.get("isPublished") === "on", updatedAt: new Date() };
   if (old) await db.update(contentItems).set(values).where(eq(contentItems.id, id)); else await db.insert(contentItems).values(values);
   if (uploaded && old?.filePathname) await del(old.filePathname).catch(() => undefined);
   revalidatePath(`/${parsed.itemType === "reconocimiento" ? "reconocimientos" : parsed.itemType === "convenio" ? "convenios" : parsed.itemType === "evento" ? "eventos" : parsed.itemType === "oficio" ? "oficios" : "directorio"}`);
