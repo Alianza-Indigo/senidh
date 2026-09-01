@@ -47,15 +47,15 @@ NEXT_PUBLIC_SITE_URL=https://su-dominio.com
 3. Cree un almacén Vercel Blob y confirme que `BLOB_READ_WRITE_TOKEN` esté disponible.
 4. Configure `AUTH_SECRET`, `SETUP_SECRET`, `SUPERADMIN_EMAIL`, `SUPERADMIN_PASSWORD` y `NEXT_PUBLIC_SITE_URL`.
 5. Instale dependencias localmente con `npm ci`.
-6. Ejecute la migración inicial con `npm run db:migrate` usando la misma `DATABASE_URL`.
-7. Despliegue el proyecto.
+6. Despliegue el proyecto. El comando de construcción ejecutará automáticamente las migraciones pendientes en Neon antes de compilar la aplicación.
+7. Confirme que el despliegue terminó correctamente.
 8. Use el botón **Acceso administrativo** o visite `/admin/login` e ingrese con `SUPERADMIN_EMAIL` y `SUPERADMIN_PASSWORD`.
 9. Opcionalmente visite `/admin/setup`, capture `SETUP_SECRET` y cree administradores almacenados en Neon.
 10. Entre a `/admin/ajustes` y sustituya correo, teléfono, domicilio y datos bancarios provisionales.
 
 Los datos reales de contacto, credenciales, mensajes y delegados se almacenan en Neon y Blob. No los agregue al repositorio público ni a las migraciones.
 
-También puede copiar `db/migrations/0000_initial.sql` al editor SQL de Neon si prefiere aplicar la migración desde su panel.
+Si necesita aplicar las migraciones manualmente, ejecute `npm run db:migrate` con `DATABASE_URL` configurada.
 
 ## Desarrollo
 
@@ -67,7 +67,7 @@ npm run dev
 Validación de producción:
 
 ```bash
-npm run build
+npm run build:app
 ```
 
 ## Rutas administrativas
