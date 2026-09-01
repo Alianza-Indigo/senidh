@@ -21,6 +21,7 @@ Sitio institucional de la **Sede Nacional de Interventores para los Derechos Hum
 - Fotografías y archivos almacenados en Vercel Blob.
 - Formulario de contacto almacenado en Neon.
 - Panel protegido con contraseña cifrada, sesión firmada, cookies seguras, verificación de origen y bloqueo temporal por intentos fallidos.
+- Acceso de superadministrador mediante credenciales protegidas en variables de entorno.
 - Instalación segura de la primera cuenta administrativa mediante `SETUP_SECRET`.
 
 ## Variables de entorno
@@ -32,6 +33,8 @@ DATABASE_URL=postgresql://USER:PASSWORD@HOST/DB?sslmode=require
 BLOB_READ_WRITE_TOKEN=vercel_blob_rw_...
 AUTH_SECRET=una-cadena-aleatoria-de-al-menos-32-caracteres
 SETUP_SECRET=clave-temporal-para-crear-el-primer-administrador
+SUPERADMIN_EMAIL=correo-del-superadministrador
+SUPERADMIN_PASSWORD=contraseña-larga-y-aleatoria
 NEXT_PUBLIC_SITE_URL=https://su-dominio.com
 ```
 
@@ -42,12 +45,13 @@ NEXT_PUBLIC_SITE_URL=https://su-dominio.com
 1. Importe este repositorio en Vercel.
 2. Cree o conecte una base Neon y copie su cadena en `DATABASE_URL`.
 3. Cree un almacén Vercel Blob y confirme que `BLOB_READ_WRITE_TOKEN` esté disponible.
-4. Configure `AUTH_SECRET`, `SETUP_SECRET` y `NEXT_PUBLIC_SITE_URL`.
+4. Configure `AUTH_SECRET`, `SETUP_SECRET`, `SUPERADMIN_EMAIL`, `SUPERADMIN_PASSWORD` y `NEXT_PUBLIC_SITE_URL`.
 5. Instale dependencias localmente con `npm ci`.
 6. Ejecute la migración inicial con `npm run db:migrate` usando la misma `DATABASE_URL`.
 7. Despliegue el proyecto.
-8. Visite `/admin/setup`, capture `SETUP_SECRET` y cree la primera cuenta.
-9. Entre a `/admin/ajustes` y sustituya correo, teléfono, domicilio y datos bancarios provisionales.
+8. Use el botón **Acceso administrativo** o visite `/admin/login` e ingrese con `SUPERADMIN_EMAIL` y `SUPERADMIN_PASSWORD`.
+9. Opcionalmente visite `/admin/setup`, capture `SETUP_SECRET` y cree administradores almacenados en Neon.
+10. Entre a `/admin/ajustes` y sustituya correo, teléfono, domicilio y datos bancarios provisionales.
 
 Los datos reales de contacto, credenciales, mensajes y delegados se almacenan en Neon y Blob. No los agregue al repositorio público ni a las migraciones.
 

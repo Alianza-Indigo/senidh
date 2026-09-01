@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import "./admin-access.css";
 
 export const metadata: Metadata = {
   title: { default: "SENIDH | Derechos, Justicia y Dignidad", template: "%s | SENIDH" },

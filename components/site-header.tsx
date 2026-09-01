@@ -1,6 +1,6 @@
 "use client";
 
-import { Menu, X } from "lucide-react";
+import { LogIn, Menu, X } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -20,7 +20,7 @@ export function SiteHeader({ organizationName }: { organizationName: string }) {
     <div className="container nav-shell">
       <Link className="brand" href="/" onClick={() => setOpen(false)}><Image src="/assets/logo-senidh.webp" width={72} height={72} alt="Escudo SENIDH" priority/><span><strong>SENIDH</strong><small>{organizationName}</small></span></Link>
       <button className="menu-toggle" aria-label="Abrir menú" aria-expanded={open} onClick={() => setOpen(!open)}>{open ? <X/> : <Menu/>}<b>Menú</b></button>
-      <nav className={`main-nav ${open ? "open" : ""}`} aria-label="Navegación principal">{nav.map(([href, label]) => <Link key={href} className={pathname === href ? "active" : ""} href={href} onClick={() => setOpen(false)}>{label}</Link>)}</nav>
+      <nav className={`main-nav ${open ? "open" : ""}`} aria-label="Navegación principal">{nav.map(([href, label]) => <Link key={href} className={pathname === href ? "active" : ""} href={href} onClick={() => setOpen(false)}>{label}</Link>)}<Link className="admin-access" href="/admin/login" onClick={() => setOpen(false)}><LogIn/>Acceso administrativo</Link></nav>
     </div>
   </header>;
 }

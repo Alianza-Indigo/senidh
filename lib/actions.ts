@@ -1,5 +1,6 @@
 "use server";
 
+import { createHash, timingSafeEqual } from "crypto";
 import { put, del } from "@vercel/blob";
 import { compare, hash } from "bcryptjs";
 import { and, eq } from "drizzle-orm";
@@ -14,6 +15,10 @@ import { assertSameOrigin, requestIpHash, verificationCode } from "@/lib/securit
 const emailSchema = z.string().trim().toLowerCase().email().max(160);
 const contentTypes = ["reconocimiento", "convenio", "directorio", "evento", "oficio"] as const;
 const statuses = ["activa", "suspendida", "revocada"] as const;
+
+function secureEqual(value: string, expected: string) {
+  return timingSafeEqual(createHash("sha256").update(value).digest(), createHash("sha256").update(expected).digest());
+}
 
 export async function setupAdmin(formData: FormData) {
   await assertSameOrigin();
@@ -34,9 +39,17 @@ export async function loginAdmin(formData: FormData) {
   const password = String(formData.get("password") ?? "");
   if (!email.success) redirect("/admin/login?error=credentials");
   const ipHash = await requestIpHash();
-  const attemptKey = (await import("crypto")).createHash("sha256").update(`${email.data}:${ipHash}`).digest("hex");
+  const attemptKey = createHash("sha256").update(`${email.data}:${ipHash}`).digest("hex");
   const attempt = (await db.select().from(authAttempts).where(eq(authAttempts.key, attemptKey)).limit(1))[0];
   if (attempt?.lockedUntil && attempt.lockedUntil > new Date()) redirect("/admin/login?error=locked");
+  const superadminEmail = process.env.SUPERADMIN_EMAIL?.trim().toLowerCase();
+  const superadminPassword = process.env.SUPERADMIN_PASSWORD;
+  const isSuperadmin = Boolean(superadminEmail && superadminPassword && email.data === superadminEmail && secureEqual(password, superadminPassword));
+  if (isSuperadmin) {
+    await db.delete(authAttempts).where(eq(authAttempts.key, attemptKey));
+    await createSession({ id: 0, name: "Superadministrador", email: email.data });
+    redirect("/admin");
+  }
   const admin = (await db.select().from(admins).where(eq(admins.email, email.data)).limit(1))[0];
   if (!admin || !(await compare(password, admin.passwordHash))) {
     const count = (attempt?.attempts ?? 0) + 1;
