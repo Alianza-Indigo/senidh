@@ -15,6 +15,7 @@
 
 - Use secretos aleatorios distintos para `AUTH_SECRET` y `SETUP_SECRET`.
 - Use una contraseña larga y exclusiva en `SUPERADMIN_PASSWORD`; nunca la incluya en el repositorio.
+- Proteja el webhook de salud con un valor exclusivo y aleatorio en `DATABASE_HEALTH_WEBHOOK_SECRET`.
 - Elimine o cambie `SETUP_SECRET` después de crear el primer administrador.
 - Limite el acceso al proyecto Vercel, Neon y Blob a personal autorizado.
 - Active copias de seguridad y revise periódicamente los registros publicados.

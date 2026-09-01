@@ -36,6 +36,7 @@ AUTH_SECRET=una-cadena-aleatoria-de-al-menos-32-caracteres
 SETUP_SECRET=clave-temporal-para-crear-el-primer-administrador
 SUPERADMIN_EMAIL=correo-del-superadministrador
 SUPERADMIN_PASSWORD=contraseña-larga-y-aleatoria
+DATABASE_HEALTH_WEBHOOK_SECRET=secreto-aleatorio-del-webhook
 NEXT_PUBLIC_SITE_URL=https://su-dominio.com
 ```
 
@@ -80,6 +81,16 @@ npm run build:app
 - `/admin/ajustes`: contacto, donaciones e identidad institucional.
 - `/admin/administradores`: creación y consulta de administradores; acceso exclusivo del superadministrador.
 - `/admin/credencial/[id]`: impresión de credencial y QR.
+
+## Webhook de salud de Neon
+
+El endpoint `/api/webhooks/database-health` acepta `GET` y `POST`, verifica la conexión y comprueba las seis tablas de la plataforma sin devolver registros. Requiere `DATABASE_HEALTH_WEBHOOK_SECRET` mediante Bearer token:
+
+```bash
+curl -H "Authorization: Bearer $DATABASE_HEALTH_WEBHOOK_SECRET" https://su-dominio.com/api/webhooks/database-health
+```
+
+Responde `200` cuando Neon y el esquema están disponibles, `503` cuando existe una falla y `401` cuando el secreto es incorrecto.
 
 ## Consideraciones operativas
 
