@@ -9,7 +9,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { db } from "@/db";
 import { admins, authAttempts, contactMessages, contentItems, interventores, settings } from "@/db/schema";
-import { createSession, destroySession, requireAdmin } from "@/lib/auth";
+import { createSession, destroySession, requireAdmin, requireSuperadmin } from "@/lib/auth";
 import { assertSameOrigin, requestIpHash, verificationCode } from "@/lib/security";
 
 const emailSchema = z.string().trim().toLowerCase().email().max(160);
@@ -47,7 +47,7 @@ export async function loginAdmin(formData: FormData) {
   const isSuperadmin = Boolean(superadminEmail && superadminPassword && email.data === superadminEmail && secureEqual(password, superadminPassword));
   if (isSuperadmin) {
     await db.delete(authAttempts).where(eq(authAttempts.key, attemptKey));
-    await createSession({ id: 0, name: "Superadministrador", email: email.data });
+    await createSession({ id: 0, name: "Superadministrador", email: email.data, isSuperadmin: true });
     redirect("/admin");
   }
   const admin = (await db.select().from(admins).where(eq(admins.email, email.data)).limit(1))[0];
@@ -66,6 +66,23 @@ export async function loginAdmin(formData: FormData) {
 export async function logoutAdmin() {
   await destroySession();
   redirect("/admin/login");
+}
+
+export async function createAdministrator(formData: FormData) {
+  await requireSuperadmin();
+  await assertSameOrigin();
+  const parsed = z.object({
+    name: z.string().trim().min(2).max(120),
+    email: emailSchema,
+    password: z.string().min(12).max(128),
+    passwordConfirmation: z.string().min(12).max(128)
+  }).safeParse(Object.fromEntries(formData));
+  if (!parsed.success || parsed.data.password !== parsed.data.passwordConfirmation) redirect("/admin/administradores?error=invalid");
+  const existing = await db.select({ id: admins.id }).from(admins).where(eq(admins.email, parsed.data.email)).limit(1);
+  if (existing.length) redirect("/admin/administradores?error=exists");
+  await db.insert(admins).values({ name: parsed.data.name, email: parsed.data.email, passwordHash: await hash(parsed.data.password, 12) });
+  revalidatePath("/admin/administradores");
+  redirect("/admin/administradores?created=1");
 }
 
 async function uploadBlob(file: File, folder: string, allowed: string[], maxBytes: number) {

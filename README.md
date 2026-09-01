@@ -22,6 +22,7 @@ Sitio institucional de la **Sede Nacional de Interventores para los Derechos Hum
 - Formulario de contacto almacenado en Neon.
 - Panel protegido con contraseña cifrada, sesión firmada, cookies seguras, verificación de origen y bloqueo temporal por intentos fallidos.
 - Acceso de superadministrador mediante credenciales protegidas en variables de entorno.
+- Creación de administradores adicionales desde una sección exclusiva del superadministrador.
 - Instalación segura de la primera cuenta administrativa mediante `SETUP_SECRET`.
 
 ## Variables de entorno
@@ -77,6 +78,7 @@ npm run build:app
 - `/admin/contenido`: publicaciones y documentos.
 - `/admin/mensajes`: comunicaciones recibidas.
 - `/admin/ajustes`: contacto, donaciones e identidad institucional.
+- `/admin/administradores`: creación y consulta de administradores; acceso exclusivo del superadministrador.
 - `/admin/credencial/[id]`: impresión de credencial y QR.
 
 ## Consideraciones operativas

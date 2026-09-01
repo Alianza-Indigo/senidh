@@ -10,8 +10,8 @@ function secret() {
   return new TextEncoder().encode(value);
 }
 
-export async function createSession(admin: { id: number; name: string; email: string }) {
-  const token = await new SignJWT({ name: admin.name, email: admin.email })
+export async function createSession(admin: { id: number; name: string; email: string; isSuperadmin?: boolean }) {
+  const token = await new SignJWT({ name: admin.name, email: admin.email, isSuperadmin: Boolean(admin.isSuperadmin) })
     .setProtectedHeader({ alg: "HS256" })
     .setSubject(String(admin.id))
     .setIssuedAt()
@@ -38,7 +38,8 @@ export async function getSession() {
   if (!token) return null;
   try {
     const { payload } = await jwtVerify(token, secret());
-    return { id: Number(payload.sub), name: String(payload.name), email: String(payload.email) };
+    const id = Number(payload.sub);
+    return { id, name: String(payload.name), email: String(payload.email), isSuperadmin: payload.isSuperadmin === true || id === 0 };
   } catch {
     return null;
   }
@@ -47,5 +48,11 @@ export async function getSession() {
 export async function requireAdmin() {
   const session = await getSession();
   if (!session) redirect("/admin/login");
+  return session;
+}
+
+export async function requireSuperadmin() {
+  const session = await requireAdmin();
+  if (!session.isSuperadmin) redirect("/admin?error=forbidden");
   return session;
 }
