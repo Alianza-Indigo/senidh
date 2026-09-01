@@ -49,6 +49,8 @@ NEXT_PUBLIC_SITE_URL=https://su-dominio.com
 8. Visite `/admin/setup`, capture `SETUP_SECRET` y cree la primera cuenta.
 9. Entre a `/admin/ajustes` y sustituya correo, teléfono, domicilio y datos bancarios provisionales.
 
+Los datos reales de contacto, credenciales, mensajes y delegados se almacenan en Neon y Blob. No los agregue al repositorio público ni a las migraciones.
+
 También puede copiar `db/migrations/0000_initial.sql` al editor SQL de Neon si prefiere aplicar la migración desde su panel.
 
 ## Desarrollo
