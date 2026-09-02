@@ -1,7 +1,7 @@
 "use server";
 
 import { createHash, timingSafeEqual } from "crypto";
-import { put, del } from "@vercel/blob";
+import { del } from "@vercel/blob";
 import { compare, hash } from "bcryptjs";
 import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
@@ -85,11 +85,11 @@ export async function createAdministrator(formData: FormData) {
   redirect("/admin/administradores?created=1");
 }
 
-async function uploadBlob(file: File, folder: string, allowed: string[], maxBytes: number) {
-  if (!file.size) return null;
-  if (file.size > maxBytes || !allowed.includes(file.type)) throw new Error("Archivo no permitido o demasiado grande");
-  const extension = file.name.split(".").pop()?.replace(/[^a-zA-Z0-9]/g, "") || "bin";
-  return put(`${folder}/${crypto.randomUUID()}.${extension}`, file, { access: "private", addRandomSuffix: false });
+function uploadedPathname(formData: FormData, field: string, folder: string) {
+  const pathname = String(formData.get(field) ?? "").trim();
+  if (!pathname) return null;
+  if (pathname.length > 500 || !pathname.startsWith(`${folder}/`) || pathname.includes("..")) throw new Error("Ruta de archivo no permitida");
+  return pathname;
 }
 
 export async function saveInterventor(formData: FormData) {
@@ -107,12 +107,11 @@ export async function saveInterventor(formData: FormData) {
     internalNotes: z.string().trim().max(5000)
   }).parse(Object.fromEntries(formData));
   const old = id ? (await db.select().from(interventores).where(eq(interventores.id, id)).limit(1))[0] : null;
-  const file = formData.get("photo");
-  const uploaded = file instanceof File ? await uploadBlob(file, "interventores", ["image/jpeg", "image/png", "image/webp"], 4 * 1024 * 1024) : null;
-  const values = { ...parsed, municipality: parsed.municipality || null, internalNotes: parsed.internalNotes || null, photoUrl: uploaded ? null : old?.photoUrl ?? null, photoPathname: uploaded?.pathname ?? old?.photoPathname ?? null, updatedAt: new Date() };
+  const photoPathname = uploadedPathname(formData, "photoPathname", "interventores");
+  const values = { ...parsed, municipality: parsed.municipality || null, internalNotes: parsed.internalNotes || null, photoUrl: photoPathname ? null : old?.photoUrl ?? null, photoPathname: photoPathname ?? old?.photoPathname ?? null, updatedAt: new Date() };
   if (old) await db.update(interventores).set(values).where(eq(interventores.id, id));
   else await db.insert(interventores).values({ ...values, verificationHash: verificationCode() });
-  if (uploaded && old?.photoPathname) await del(old.photoPathname).catch(() => undefined);
+  if (photoPathname && old?.photoPathname && old.photoPathname !== photoPathname) await del(old.photoPathname).catch(() => undefined);
   revalidatePath("/admin/interventores"); revalidatePath("/directorio"); revalidatePath("/identificaciones");
   redirect("/admin/interventores?saved=1");
 }
@@ -132,11 +131,10 @@ export async function saveContent(formData: FormData) {
     fileUrl: z.string().trim().max(500), eventDate: z.string().trim(), sortOrder: z.coerce.number().int().min(-9999).max(9999)
   }).parse(Object.fromEntries(formData));
   const old = id ? (await db.select().from(contentItems).where(eq(contentItems.id, id)).limit(1))[0] : null;
-  const file = formData.get("document");
-  const uploaded = file instanceof File ? await uploadBlob(file, "documentos", ["application/pdf", "image/jpeg", "image/png", "image/webp"], 12 * 1024 * 1024) : null;
-  const values = { ...parsed, subtitle: parsed.subtitle || null, summary: parsed.summary || null, fileUrl: uploaded ? null : (parsed.fileUrl || old?.fileUrl || null), filePathname: uploaded?.pathname ?? old?.filePathname ?? null, eventDate: parsed.eventDate || null, isPublished: formData.get("isPublished") === "on", updatedAt: new Date() };
+  const documentPathname = uploadedPathname(formData, "documentPathname", "documentos");
+  const values = { ...parsed, subtitle: parsed.subtitle || null, summary: parsed.summary || null, fileUrl: documentPathname ? null : (parsed.fileUrl || old?.fileUrl || null), filePathname: documentPathname ?? old?.filePathname ?? null, eventDate: parsed.eventDate || null, isPublished: formData.get("isPublished") === "on", updatedAt: new Date() };
   if (old) await db.update(contentItems).set(values).where(eq(contentItems.id, id)); else await db.insert(contentItems).values(values);
-  if (uploaded && old?.filePathname) await del(old.filePathname).catch(() => undefined);
+  if (documentPathname && old?.filePathname && old.filePathname !== documentPathname) await del(old.filePathname).catch(() => undefined);
   revalidatePath(`/${parsed.itemType === "reconocimiento" ? "reconocimientos" : parsed.itemType === "convenio" ? "convenios" : parsed.itemType === "evento" ? "eventos" : parsed.itemType === "oficio" ? "oficios" : "directorio"}`);
   redirect("/admin/contenido?saved=1");
 }
