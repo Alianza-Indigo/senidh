@@ -3,7 +3,11 @@ import Link from "next/link";
 import { PageHero } from "@/components/page-hero";
 import { getSettings } from "@/lib/settings";
 
-export const metadata: Metadata = { title: "Donar" };
+export const metadata: Metadata = {
+  title: "Donar",
+  description: "Información para apoyar la labor institucional de SENIDH.",
+  alternates: { canonical: "/donar" }
+};
 
 export default async function DonatePage() {
   const settings = await getSettings();

@@ -15,8 +15,9 @@ const config = {
 } as const;
 
 export async function generateMetadata({ params }: { params: Promise<{ section: string }> }): Promise<Metadata> {
-  const section = config[(await params).section as keyof typeof config];
-  return section ? { title: section.title, description: section.description } : {};
+  const slug = (await params).section as keyof typeof config;
+  const section = config[slug];
+  return section ? { title: section.title, description: section.description, alternates: { canonical: `/${slug}` } } : {};
 }
 
 export default async function SectionPage({ params }: { params: Promise<{ section: string }> }) {

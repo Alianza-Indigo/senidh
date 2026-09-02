@@ -8,7 +8,11 @@ import { db } from "@/db";
 import { interventores } from "@/db/schema";
 import { publicStatus } from "@/lib/credentials";
 
-export const metadata: Metadata = { title: "Directorio" };
+export const metadata: Metadata = {
+  title: "Directorio oficial",
+  description: "Directorio de representantes e interventores acreditados por SENIDH.",
+  alternates: { canonical: "/directorio" }
+};
 
 export default async function DirectoryPage({ searchParams }: { searchParams: Promise<{ credencial?: string }> }) {
   const query = (await searchParams).credencial?.trim().toUpperCase();

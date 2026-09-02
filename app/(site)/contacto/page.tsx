@@ -4,7 +4,11 @@ import { PageHero } from "@/components/page-hero";
 import { submitContact } from "@/lib/actions";
 import { getSettings } from "@/lib/settings";
 
-export const metadata: Metadata = { title: "Contacto" };
+export const metadata: Metadata = {
+  title: "Contacto",
+  description: "Canal de contacto institucional de SENIDH.",
+  alternates: { canonical: "/contacto" }
+};
 
 export default async function ContactPage({ searchParams }: { searchParams: Promise<{ sent?: string }> }) {
   const [settings, params] = await Promise.all([getSettings(), searchParams]);
