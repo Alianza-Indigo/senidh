@@ -5,11 +5,15 @@ import { PublicProfile } from "@/components/public-profile";
 import { db } from "@/db";
 import { interventores } from "@/db/schema";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Verificar identificación",
   description: "Consulta el estado y la vigencia de una credencial emitida por SENIDH.",
   alternates: { canonical: "/identificaciones" }
 };
+
+export async function generateMetadata({ searchParams }: { searchParams: Promise<{ credencial?: string }> }): Promise<Metadata> {
+  return (await searchParams).credencial ? { ...baseMetadata, robots: { index: false, follow: false, noarchive: true } } : baseMetadata;
+}
 
 export default async function VerificationPage({ searchParams }: { searchParams: Promise<{ credencial?: string }> }) {
   const query = (await searchParams).credencial?.trim().toUpperCase();

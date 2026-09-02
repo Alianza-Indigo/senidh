@@ -1,0 +1,1 @@
+ALTER TABLE "interventores" ADD COLUMN "allow_google_indexing" boolean DEFAULT false NOT NULL;

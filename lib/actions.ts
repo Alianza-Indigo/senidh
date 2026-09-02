@@ -108,7 +108,7 @@ export async function saveInterventor(formData: FormData) {
   }).parse(Object.fromEntries(formData));
   const old = id ? (await db.select().from(interventores).where(eq(interventores.id, id)).limit(1))[0] : null;
   const photoPathname = uploadedPathname(formData, "photoPathname", "interventores");
-  const values = { ...parsed, municipality: parsed.municipality || null, internalNotes: parsed.internalNotes || null, photoUrl: photoPathname ? null : old?.photoUrl ?? null, photoPathname: photoPathname ?? old?.photoPathname ?? null, updatedAt: new Date() };
+  const values = { ...parsed, municipality: parsed.municipality || null, internalNotes: parsed.internalNotes || null, allowGoogleIndexing: formData.get("allowGoogleIndexing") === "on", photoUrl: photoPathname ? null : old?.photoUrl ?? null, photoPathname: photoPathname ?? old?.photoPathname ?? null, updatedAt: new Date() };
   if (old) await db.update(interventores).set(values).where(eq(interventores.id, id));
   else await db.insert(interventores).values({ ...values, verificationHash: verificationCode() });
   if (photoPathname && old?.photoPathname && old.photoPathname !== photoPathname) await del(old.photoPathname).catch(() => undefined);

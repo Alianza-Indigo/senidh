@@ -25,6 +25,7 @@ export const interventores = pgTable("interventores", {
   status: credentialStatus("status").default("activa").notNull(),
   photoUrl: text("photo_url"),
   photoPathname: text("photo_pathname"),
+  allowGoogleIndexing: boolean("allow_google_indexing").default(false).notNull(),
   internalNotes: text("internal_notes"),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull()
