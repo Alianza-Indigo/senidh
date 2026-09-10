@@ -93,7 +93,29 @@ function uploadedPathname(formData: FormData, field: string, folder: string) {
   return pathname;
 }
 
-export async function saveInterventor(formData: FormData) {
+type InterventorFormState = {
+  status: "error";
+  message: string;
+} | null;
+
+function isUniqueConstraintViolation(error: unknown, constraint: string) {
+  const visited = new Set<unknown>();
+  let current = error;
+
+  while (current && typeof current === "object" && !visited.has(current)) {
+    visited.add(current);
+    const details = current as { code?: unknown; constraint?: unknown; message?: unknown; cause?: unknown };
+    if (
+      details.code === "23505" &&
+      (details.constraint === constraint || String(details.message ?? "").includes(constraint))
+    ) return true;
+    current = details.cause;
+  }
+
+  return false;
+}
+
+export async function saveInterventor(_previousState: InterventorFormState, formData: FormData): Promise<InterventorFormState> {
   await requireAdmin(); await assertSameOrigin();
   const id = Number(formData.get("id") || 0);
   const parsed = z.object({
@@ -107,12 +129,20 @@ export async function saveInterventor(formData: FormData) {
     expiresAt: z.string().date(),
     status: z.enum(statuses),
     internalNotes: z.string().trim().max(5000)
-  }).parse(Object.fromEntries(formData));
+  }).safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { status: "error", message: "Revise los datos capturados. La CURP debe tener 18 caracteres y un formato válido." };
   const old = id ? (await db.select().from(interventores).where(eq(interventores.id, id)).limit(1))[0] : null;
   const photoPathname = uploadedPathname(formData, "photoPathname", "interventores");
-  const values = { ...parsed, municipality: parsed.municipality || null, internalNotes: parsed.internalNotes || null, allowGoogleIndexing: formData.get("allowGoogleIndexing") === "on", photoUrl: photoPathname ? null : old?.photoUrl ?? null, photoPathname: photoPathname ?? old?.photoPathname ?? null, updatedAt: new Date() };
-  if (old) await db.update(interventores).set(values).where(eq(interventores.id, id));
-  else await db.insert(interventores).values({ ...values, verificationHash: verificationCode() });
+  const values = { ...parsed.data, municipality: parsed.data.municipality || null, internalNotes: parsed.data.internalNotes || null, allowGoogleIndexing: formData.get("allowGoogleIndexing") === "on", photoUrl: photoPathname ? null : old?.photoUrl ?? null, photoPathname: photoPathname ?? old?.photoPathname ?? null, updatedAt: new Date() };
+  try {
+    if (old) await db.update(interventores).set(values).where(eq(interventores.id, id));
+    else await db.insert(interventores).values({ ...values, verificationHash: verificationCode() });
+  } catch (error) {
+    if (isUniqueConstraintViolation(error, "interventores_curp_unique")) {
+      return { status: "error", message: "La CURP ya está registrada en otro miembro. Revísela o edite el registro existente." };
+    }
+    throw error;
+  }
   if (photoPathname && old?.photoPathname && old.photoPathname !== photoPathname) await del(old.photoPathname).catch(() => undefined);
   revalidatePath("/admin/interventores"); revalidatePath("/directorio"); revalidatePath("/identificaciones");
   redirect("/admin/interventores?saved=1");

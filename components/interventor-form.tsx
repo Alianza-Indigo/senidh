@@ -1,13 +1,17 @@
+"use client";
+
 import Link from "next/link";
+import { useActionState } from "react";
 import { PrivateBlobUploadField } from "@/components/private-blob-upload-field";
 import type { Interventor } from "@/db/schema";
 import { saveInterventor } from "@/lib/actions";
 
 export function InterventorForm({ person }: { person?: Interventor }) {
+  const [state, formAction, isPending] = useActionState(saveInterventor, null);
   const today = new Date().toISOString().slice(0, 10);
   const nextYear = new Date(Date.now() + 365 * 86400000).toISOString().slice(0, 10);
 
-  return <form className="admin-card form-grid" action={saveInterventor}>
+  return <form className="admin-card form-grid" action={formAction}>
     <input type="hidden" name="id" value={person?.id ?? ""}/>
     <label>Folio de identificación *<input name="credentialNumber" defaultValue={person?.credentialNumber} placeholder="SENIDH-CHIH-0001" required maxLength={50}/></label>
     <label>CURP *<input name="curp" defaultValue={person?.curp ?? ""} placeholder="GODE561231HDFRRN09" required minLength={18} maxLength={18} autoCapitalize="characters" spellCheck={false} style={{ textTransform: "uppercase" }}/><small>18 caracteres, sin espacios ni guiones.</small></label>
@@ -21,6 +25,7 @@ export function InterventorForm({ person }: { person?: Interventor }) {
     <PrivateBlobUploadField accept="image/jpeg,image/png,image/webp" fieldName="photoPathname" hasExisting={Boolean(person?.photoPathname || person?.photoUrl)} help="JPG, PNG o WebP; máximo 4 MB. Se almacena en Vercel Blob privado." kind="interventor-photo" label="Fotografía" maxBytes={4 * 1024 * 1024}/>
     <label className="checkbox span-2"><input type="checkbox" name="allowGoogleIndexing" defaultChecked={person?.allowGoogleIndexing ?? false}/><span>Permitir que este miembro aparezca en Google y otros buscadores<small>Si se desactiva, seguirá siendo verificable mediante su QR o folio, pero se retirará del directorio indexable.</small></span></label>
     <label className="span-2">Notas internas<textarea name="internalNotes" defaultValue={person?.internalNotes ?? ""} rows={4} maxLength={5000}/><small>No se muestran públicamente.</small></label>
-    <div className="span-2 form-actions"><button className="button navy" type="submit">Guardar delegado</button><Link href="/admin/interventores">Cancelar</Link></div>
+    {state?.status === "error" && <div className="alert error span-2" role="alert" aria-live="polite">{state.message}</div>}
+    <div className="span-2 form-actions"><button className="button navy" type="submit" disabled={isPending}>{isPending ? "Guardando…" : "Guardar delegado"}</button><Link href="/admin/interventores">Cancelar</Link></div>
   </form>;
 }
