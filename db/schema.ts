@@ -16,6 +16,7 @@ export const interventores = pgTable("interventores", {
   id: serial("id").primaryKey(),
   credentialNumber: varchar("credential_number", { length: 50 }).notNull(),
   verificationHash: varchar("verification_hash", { length: 40 }).notNull(),
+  curp: varchar("curp", { length: 18 }),
   fullName: varchar("full_name", { length: 160 }).notNull(),
   roleTitle: varchar("role_title", { length: 140 }).notNull(),
   stateName: varchar("state_name", { length: 100 }).notNull(),
@@ -32,6 +33,7 @@ export const interventores = pgTable("interventores", {
 }, table => [
   uniqueIndex("interventores_credential_unique").on(table.credentialNumber),
   uniqueIndex("interventores_hash_unique").on(table.verificationHash),
+  uniqueIndex("interventores_curp_unique").on(table.curp),
   index("interventores_name_idx").on(table.fullName),
   index("interventores_status_idx").on(table.status)
 ]);

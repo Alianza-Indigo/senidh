@@ -10,6 +10,7 @@ export function InterventorForm({ person }: { person?: Interventor }) {
   return <form className="admin-card form-grid" action={saveInterventor}>
     <input type="hidden" name="id" value={person?.id ?? ""}/>
     <label>Folio de identificación *<input name="credentialNumber" defaultValue={person?.credentialNumber} placeholder="SENIDH-CHIH-0001" required maxLength={50}/></label>
+    <label>CURP *<input name="curp" defaultValue={person?.curp ?? ""} placeholder="GODE561231HDFRRN09" required minLength={18} maxLength={18} autoCapitalize="characters" spellCheck={false} style={{ textTransform: "uppercase" }}/><small>18 caracteres, sin espacios ni guiones.</small></label>
     <label>Nombre completo *<input name="fullName" defaultValue={person?.fullName} required maxLength={160}/></label>
     <label>Puesto o cargo *<input name="roleTitle" defaultValue={person?.roleTitle ?? "Delegado(a)"} required maxLength={140}/></label>
     <label>Estado *<input name="stateName" defaultValue={person?.stateName ?? "Chihuahua"} required maxLength={100}/></label>

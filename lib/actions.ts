@@ -15,6 +15,7 @@ import { assertSameOrigin, requestIpHash, verificationCode } from "@/lib/securit
 const emailSchema = z.string().trim().toLowerCase().email().max(160);
 const contentTypes = ["reconocimiento", "convenio", "directorio", "evento", "oficio"] as const;
 const statuses = ["activa", "suspendida", "revocada"] as const;
+const curpPattern = /^[A-Z][AEIOUX][A-Z]{2}\d{2}(?:0[1-9]|1[0-2])(?:0[1-9]|[12]\d|3[01])[HM](?:AS|BC|BS|CC|CL|CM|CS|CH|DF|DG|GT|GR|HG|JC|MC|MN|MS|NT|NL|OC|PL|QT|QR|SP|SL|SR|TC|TS|TL|VZ|YN|ZS|NE)[B-DF-HJ-NP-TV-Z]{3}[A-Z\d]\d$/;
 
 function secureEqual(value: string, expected: string) {
   return timingSafeEqual(createHash("sha256").update(value).digest(), createHash("sha256").update(expected).digest());
@@ -97,6 +98,7 @@ export async function saveInterventor(formData: FormData) {
   const id = Number(formData.get("id") || 0);
   const parsed = z.object({
     credentialNumber: z.string().trim().toUpperCase().min(4).max(50),
+    curp: z.string().trim().toUpperCase().regex(curpPattern, "CURP inválida"),
     fullName: z.string().trim().min(3).max(160),
     roleTitle: z.string().trim().min(2).max(140),
     stateName: z.string().trim().min(2).max(100),
