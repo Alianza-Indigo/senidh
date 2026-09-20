@@ -9,6 +9,8 @@ import { saveInterventor } from "@/lib/actions";
 export function InterventorForm({ person }: { person?: Interventor }) {
   const [state, formAction, isPending] = useActionState(saveInterventor, null);
   const [isForeign, setIsForeign] = useState(person?.isForeign ?? false);
+  const [curp, setCurp] = useState(person?.curp ?? "");
+  const [driverLicenseNumber, setDriverLicenseNumber] = useState(person?.driverLicenseNumber ?? "");
   const today = new Date().toISOString().slice(0, 10);
   const nextYear = new Date(Date.now() + 365 * 86400000).toISOString().slice(0, 10);
 
@@ -16,8 +18,7 @@ export function InterventorForm({ person }: { person?: Interventor }) {
     <input type="hidden" name="id" value={person?.id ?? ""}/>
     <label>Folio de identificación *<input name="credentialNumber" defaultValue={person?.credentialNumber} placeholder="SENIDH-CHIH-0001" required maxLength={50}/></label>
     <label className="checkbox"><input type="checkbox" name="isForeign" checked={isForeign} onChange={event => setIsForeign(event.target.checked)}/><span>Es extranjero<small>Al seleccionarlo se solicitará la licencia de conducir en lugar de la CURP.</small></span></label>
-    <label hidden={isForeign}>CURP *<input name="curp" defaultValue={person?.curp ?? ""} placeholder="GODE561231HDFRRN09" required={!isForeign} disabled={isForeign} minLength={18} maxLength={18} autoCapitalize="characters" spellCheck={false} style={{ textTransform: "uppercase" }}/><small>18 caracteres, sin espacios ni guiones.</small></label>
-    <label hidden={!isForeign}>Número de licencia de conducir *<input name="driverLicenseNumber" defaultValue={person?.driverLicenseNumber ?? ""} placeholder="Número de licencia" required={isForeign} disabled={!isForeign} maxLength={80} autoCapitalize="characters" spellCheck={false} style={{ textTransform: "uppercase" }}/><small>Capture el número tal como aparece en la licencia extranjera.</small></label>
+    <label>{isForeign ? "Número de licencia de conducir" : "CURP"} *<input name={isForeign ? "driverLicenseNumber" : "curp"} value={isForeign ? driverLicenseNumber : curp} onChange={event => isForeign ? setDriverLicenseNumber(event.target.value) : setCurp(event.target.value)} placeholder={isForeign ? "Número de licencia" : "GODE561231HDFRRN09"} required minLength={isForeign ? 3 : 18} maxLength={isForeign ? 80 : 18} autoCapitalize="characters" spellCheck={false} style={{ textTransform: "uppercase" }}/><small>{isForeign ? "Capture el número tal como aparece en la licencia extranjera." : "18 caracteres, sin espacios ni guiones."}</small></label>
     <label>Nombre completo *<input name="fullName" defaultValue={person?.fullName} required maxLength={160}/></label>
     <label>Puesto o cargo *<input name="roleTitle" defaultValue={person?.roleTitle ?? "Delegado(a)"} required maxLength={140}/></label>
     <label>Estado *<input name="stateName" defaultValue={person?.stateName ?? "Chihuahua"} required maxLength={100}/></label>
