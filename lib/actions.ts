@@ -120,7 +120,9 @@ export async function saveInterventor(_previousState: InterventorFormState, form
   const id = Number(formData.get("id") || 0);
   const parsed = z.object({
     credentialNumber: z.string().trim().toUpperCase().min(4).max(50),
-    curp: z.string().trim().toUpperCase().regex(curpPattern, "CURP inválida"),
+    isForeign: z.string().optional(),
+    curp: z.string().trim().toUpperCase().max(18).optional().default(""),
+    driverLicenseNumber: z.string().trim().toUpperCase().max(80).optional().default(""),
     fullName: z.string().trim().min(3).max(160),
     roleTitle: z.string().trim().min(2).max(140),
     stateName: z.string().trim().min(2).max(100),
@@ -130,10 +132,18 @@ export async function saveInterventor(_previousState: InterventorFormState, form
     status: z.enum(statuses),
     internalNotes: z.string().trim().max(5000)
   }).safeParse(Object.fromEntries(formData));
-  if (!parsed.success) return { status: "error", message: "Revise los datos capturados. La CURP debe tener 18 caracteres y un formato válido." };
+  if (!parsed.success) return { status: "error", message: "Revise los datos capturados y complete todos los campos obligatorios." };
+  const isForeign = parsed.data.isForeign === "on";
+  if (!isForeign && !curpPattern.test(parsed.data.curp)) {
+    return { status: "error", message: "La CURP debe tener 18 caracteres y un formato válido." };
+  }
+  if (isForeign && parsed.data.driverLicenseNumber.length < 3) {
+    return { status: "error", message: "Capture un número de licencia de conducir válido para la persona extranjera." };
+  }
   const old = id ? (await db.select().from(interventores).where(eq(interventores.id, id)).limit(1))[0] : null;
   const photoPathname = uploadedPathname(formData, "photoPathname", "interventores");
-  const values = { ...parsed.data, municipality: parsed.data.municipality || null, internalNotes: parsed.data.internalNotes || null, allowGoogleIndexing: formData.get("allowGoogleIndexing") === "on", photoUrl: photoPathname ? null : old?.photoUrl ?? null, photoPathname: photoPathname ?? old?.photoPathname ?? null, updatedAt: new Date() };
+  const personData = parsed.data;
+  const values = { credentialNumber: personData.credentialNumber, fullName: personData.fullName, roleTitle: personData.roleTitle, stateName: personData.stateName, municipality: personData.municipality || null, issuedAt: personData.issuedAt, expiresAt: personData.expiresAt, status: personData.status, internalNotes: personData.internalNotes || null, isForeign, curp: isForeign ? null : personData.curp, driverLicenseNumber: isForeign ? personData.driverLicenseNumber : null, allowGoogleIndexing: formData.get("allowGoogleIndexing") === "on", photoUrl: photoPathname ? null : old?.photoUrl ?? null, photoPathname: photoPathname ?? old?.photoPathname ?? null, updatedAt: new Date() };
   try {
     if (old) await db.update(interventores).set(values).where(eq(interventores.id, id));
     else await db.insert(interventores).values({ ...values, verificationHash: verificationCode() });

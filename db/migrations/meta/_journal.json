@@ -22,6 +22,13 @@
       "when": 1789043848999,
       "tag": "0002_interventor_curp",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1789863267442,
+      "tag": "0003_foreign_interventor_license",
+      "breakpoints": true
     }
   ]
 }
