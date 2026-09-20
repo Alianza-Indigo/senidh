@@ -1,12 +1,12 @@
 import { eq } from "drizzle-orm";
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import QRCode from "qrcode";
 import Link from "next/link";
 import { PrintButton } from "@/components/print-button";
 import { db } from "@/db";
 import { interventores } from "@/db/schema";
 import { requireAdmin } from "@/lib/auth";
+import { brandedQrDataUrl } from "@/lib/branded-qr";
 import { siteUrl } from "@/lib/credentials";
 
 export default async function CredentialPage({ params }: { params: Promise<{ id: string }> }) {
@@ -15,12 +15,7 @@ export default async function CredentialPage({ params }: { params: Promise<{ id:
   if (!person) notFound();
   if (person.photoPathname) person.photoUrl = `/api/media/interventores/${person.id}`;
   const directoryUrl = `${siteUrl()}/directorio?credencial=${person.verificationHash}`;
-  const qrPng = await QRCode.toDataURL(directoryUrl, {
-    errorCorrectionLevel: "H",
-    margin: 2,
-    width: 1200,
-    color: { dark: "#071b35", light: "#ffffff" }
-  });
+  const qrPng = await brandedQrDataUrl(directoryUrl);
 
   return <main className="credential-page"><div className="credential-toolbar"><Link href="/admin/interventores">← Volver</Link><p>Imprima frente y reverso al 100 %, sin ajustar a página.</p><PrintButton/></div><div className="credential-sheet"><section className="id-card"><header><Image src="/assets/logo-senidh.webp" width={52} height={52} alt=""/><div><strong>SENIDH</strong><span>Sede Nacional de Interventores para los Derechos Humanos</span></div></header><div className="id-front">{person.photoUrl ? <Image src={person.photoUrl} width={100} height={124} alt={`Fotografía de ${person.fullName}`}/> : <div className="id-photo-placeholder">{person.fullName[0]}</div>}<div className="id-front-data"><h1>{person.fullName}</h1><h2>{person.roleTitle}</h2><dl><div><dt>Identificación</dt><dd>{person.credentialNumber}</dd></div><div><dt>Ámbito</dt><dd>{[person.municipality, person.stateName].filter(Boolean).join(", ")}</dd></div><div><dt>Expedición</dt><dd>{person.issuedAt}</dd></div><div><dt>Vigencia</dt><dd>{person.expiresAt}</dd></div><div className={`id-document${person.isForeign ? " foreign-document" : ""}`}><dt>{person.isForeign ? "Licencia de conducir" : "CURP"}</dt><dd>{person.isForeign ? person.driverLicenseNumber ?? "Pendiente de registro" : person.curp ?? "Pendiente de registro"}</dd></div></dl></div></div><p className="id-legal-notice">El uso de esta credencial es personal e intransferible. El mal uso de la misma es responsabilidad exclusiva de su titular y se sancionará conforme a la ley.</p><footer><strong>Derechos · Justicia · Dignidad</strong><span>IDENTIFICACIÓN INSTITUCIONAL</span></footer></section><section className="id-card id-back"><header>VERIFICACIÓN EN EL DIRECTORIO OFICIAL</header><div className="id-back-body"><div className="qr"><Image className="qr-image" src={qrPng} width={1200} height={1200} alt="Código QR de verificación" unoptimized/></div><div className="id-back-data"><h2>Escanee para confirmar</h2><p>El QR abre el registro individual dentro del Directorio y muestra su estado actual.</p><small>Folio</small><strong>{person.credentialNumber}</strong><small>Código de verificación</small><strong className="id-verification-code">{person.verificationHash}</strong></div></div><footer><strong>{new URL(siteUrl()).host}/directorio</strong><span>La consulta electrónica prevalece sobre la impresión.</span></footer></section></div></main>;
 }
