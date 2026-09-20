@@ -4,8 +4,8 @@ import QRCode from "qrcode";
 import sharp from "sharp";
 
 const QR_SIZE = 1200;
-const LOGO_SIZE = 310;
-const PLATE_SIZE = 370;
+const LOGO_SIZE = 384;
+const PLATE_SIZE = 444;
 let logoSource: Promise<Buffer> | undefined;
 
 function loadLogo() {
