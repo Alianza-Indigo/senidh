@@ -4,8 +4,8 @@ import QRCode from "qrcode";
 import sharp from "sharp";
 
 const QR_SIZE = 1200;
-const LOGO_SIZE = 190;
-const PLATE_SIZE = 230;
+const LOGO_SIZE = 310;
+const PLATE_SIZE = 370;
 let logoSource: Promise<Buffer> | undefined;
 
 function loadLogo() {
@@ -25,7 +25,7 @@ export async function brandedQrDataUrl(value: string) {
   ]);
 
   const mask = Buffer.from(`<svg width="${LOGO_SIZE}" height="${LOGO_SIZE}"><circle cx="${LOGO_SIZE / 2}" cy="${LOGO_SIZE / 2}" r="${LOGO_SIZE / 2}" fill="#fff"/></svg>`);
-  const plate = Buffer.from(`<svg width="${PLATE_SIZE}" height="${PLATE_SIZE}"><circle cx="${PLATE_SIZE / 2}" cy="${PLATE_SIZE / 2}" r="${PLATE_SIZE / 2 - 6}" fill="#fff" stroke="#c7a254" stroke-width="8"/></svg>`);
+  const plate = Buffer.from(`<svg width="${PLATE_SIZE}" height="${PLATE_SIZE}"><circle cx="${PLATE_SIZE / 2}" cy="${PLATE_SIZE / 2}" r="${PLATE_SIZE / 2 - 7}" fill="#fff" stroke="#c7a254" stroke-width="10"/></svg>`);
   const logo = await sharp(logoBuffer)
     .resize(LOGO_SIZE, LOGO_SIZE, { fit: "cover" })
     .composite([{ input: mask, blend: "dest-in" }])
