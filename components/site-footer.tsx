@@ -1,11 +1,8 @@
 import { Mail, MapPin, MessageCircle, Phone } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { CONTACT_EMAIL, WHATSAPP_DISPLAY, WHATSAPP_NUMBER } from "@/lib/contact-info";
 import { getSettings } from "@/lib/settings";
-
-const CONTACT_EMAIL = "contacto@senidh.org";
-const WHATSAPP_DISPLAY = "+52 669 394 2834";
-const WHATSAPP_NUMBER = "526693942834";
 
 export async function SiteFooter() {
   const settings = await getSettings();
