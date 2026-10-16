@@ -1,7 +1,7 @@
 import { createHash, timingSafeEqual } from "crypto";
 import { NextResponse } from "next/server";
 import { db } from "@/db";
-import { admins, authAttempts, contactMessages, contentItems, interventores, settings } from "@/db/schema";
+import { admins, authAttempts, contactMessages, contentItems, disabledInterventores, interventores, settings } from "@/db/schema";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -29,6 +29,7 @@ async function databaseHealth(request: Request) {
       db.select({ value: authAttempts.key }).from(authAttempts).limit(1),
       db.select({ value: contactMessages.id }).from(contactMessages).limit(1),
       db.select({ value: contentItems.id }).from(contentItems).limit(1),
+      db.select({ value: disabledInterventores.id }).from(disabledInterventores).limit(1),
       db.select({ value: interventores.id }).from(interventores).limit(1),
       db.select({ value: settings.key }).from(settings).limit(1)
     ]);
@@ -37,7 +38,7 @@ async function databaseHealth(request: Request) {
       service: "senidh-neon",
       database: "available",
       schema: "complete",
-      tablesChecked: 6,
+      tablesChecked: 7,
       durationMs: Date.now() - startedAt,
       checkedAt: new Date().toISOString()
     });

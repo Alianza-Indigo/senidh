@@ -8,7 +8,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { db } from "@/db";
-import { admins, authAttempts, contactMessages, contentItems, interventores, settings } from "@/db/schema";
+import { admins, authAttempts, contactMessages, contentItems, disabledInterventores, interventores, settings } from "@/db/schema";
 import { createSession, destroySession, requireAdmin, requireSuperadmin } from "@/lib/auth";
 import { assertSameOrigin, requestIpHash, verificationCode } from "@/lib/security";
 
@@ -163,6 +163,52 @@ export async function revokeInterventor(formData: FormData) {
   const id = Number(formData.get("id"));
   await db.update(interventores).set({ status: "revocada", updatedAt: new Date() }).where(eq(interventores.id, id));
   revalidatePath("/admin/interventores"); revalidatePath("/directorio");
+}
+
+export async function disableInterventor(formData: FormData) {
+  const session = await requireAdmin(); await assertSameOrigin();
+  const parsed = z.object({
+    id: z.coerce.number().int().positive(),
+    reason: z.string().trim().max(1000).optional().default("")
+  }).safeParse(Object.fromEntries(formData));
+  if (!parsed.success) redirect("/admin/interventores?error=invalid-disable");
+  const person = (await db.select().from(interventores).where(eq(interventores.id, parsed.data.id)).limit(1))[0];
+  if (!person) redirect("/admin/interventores?error=not-found");
+  await db.batch([
+    db.insert(disabledInterventores).values({
+      originalInterventorId: person.id,
+      credentialNumber: person.credentialNumber,
+      verificationHash: person.verificationHash,
+      isForeign: person.isForeign,
+      curp: person.curp,
+      driverLicenseNumber: person.driverLicenseNumber,
+      fullName: person.fullName,
+      formerRoleTitle: person.roleTitle,
+      stateName: person.stateName,
+      municipality: person.municipality,
+      issuedAt: person.issuedAt,
+      expiresAt: person.expiresAt,
+      formerStatus: person.status,
+      photoUrl: person.photoUrl,
+      photoPathname: person.photoPathname,
+      allowedGoogleIndexing: person.allowGoogleIndexing,
+      internalNotes: person.internalNotes,
+      disabledReason: parsed.data.reason || null,
+      disabledByAdminId: session.id || null,
+      disabledByName: session.name,
+      disabledByEmail: session.email,
+      originalCreatedAt: person.createdAt,
+      originalUpdatedAt: person.updatedAt
+    }),
+    db.delete(interventores).where(eq(interventores.id, person.id))
+  ]);
+  revalidatePath("/admin");
+  revalidatePath("/admin/interventores");
+  revalidatePath("/admin/interventores/deshabilitados");
+  revalidatePath("/directorio");
+  revalidatePath("/identificaciones");
+  revalidatePath("/sitemap.xml");
+  redirect("/admin/interventores?disabled=1");
 }
 
 export async function saveContent(formData: FormData) {

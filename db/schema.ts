@@ -40,6 +40,39 @@ export const interventores = pgTable("interventores", {
   index("interventores_status_idx").on(table.status)
 ]);
 
+export const disabledInterventores = pgTable("disabled_interventores", {
+  id: serial("id").primaryKey(),
+  originalInterventorId: integer("original_interventor_id").notNull(),
+  credentialNumber: varchar("credential_number", { length: 50 }).notNull(),
+  verificationHash: varchar("verification_hash", { length: 40 }).notNull(),
+  isForeign: boolean("is_foreign").default(false).notNull(),
+  curp: varchar("curp", { length: 18 }),
+  driverLicenseNumber: varchar("driver_license_number", { length: 80 }),
+  fullName: varchar("full_name", { length: 160 }).notNull(),
+  formerRoleTitle: varchar("former_role_title", { length: 140 }).notNull(),
+  stateName: varchar("state_name", { length: 100 }).notNull(),
+  municipality: varchar("municipality", { length: 120 }),
+  issuedAt: date("issued_at").notNull(),
+  expiresAt: date("expires_at").notNull(),
+  formerStatus: credentialStatus("former_status").notNull(),
+  photoUrl: text("photo_url"),
+  photoPathname: text("photo_pathname"),
+  allowedGoogleIndexing: boolean("allowed_google_indexing").default(false).notNull(),
+  internalNotes: text("internal_notes"),
+  disabledReason: text("disabled_reason"),
+  disabledByAdminId: integer("disabled_by_admin_id"),
+  disabledByName: varchar("disabled_by_name", { length: 120 }).notNull(),
+  disabledByEmail: varchar("disabled_by_email", { length: 160 }).notNull(),
+  originalCreatedAt: timestamp("original_created_at", { withTimezone: true }).notNull(),
+  originalUpdatedAt: timestamp("original_updated_at", { withTimezone: true }).notNull(),
+  disabledAt: timestamp("disabled_at", { withTimezone: true }).defaultNow().notNull()
+}, table => [
+  uniqueIndex("disabled_interventores_original_unique").on(table.originalInterventorId),
+  index("disabled_interventores_name_idx").on(table.fullName),
+  index("disabled_interventores_credential_idx").on(table.credentialNumber),
+  index("disabled_interventores_disabled_at_idx").on(table.disabledAt)
+]);
+
 export const contentItems = pgTable("content_items", {
   id: serial("id").primaryKey(),
   itemType: contentType("item_type").notNull(),
@@ -81,4 +114,5 @@ export const authAttempts = pgTable("auth_attempts", {
 });
 
 export type Interventor = typeof interventores.$inferSelect;
+export type DisabledInterventor = typeof disabledInterventores.$inferSelect;
 export type ContentItem = typeof contentItems.$inferSelect;
