@@ -20,6 +20,33 @@ const folders: Record<UploadKind, string> = {
   "content-document": "documentos"
 };
 
+const MAX_PHOTO_WIDTH = 1200;
+const MAX_PHOTO_HEIGHT = 1500;
+
+async function optimizePhoto(file: File) {
+  try {
+    const bitmap = await createImageBitmap(file);
+    const scale = Math.min(1, MAX_PHOTO_WIDTH / bitmap.width, MAX_PHOTO_HEIGHT / bitmap.height);
+    const width = Math.max(1, Math.round(bitmap.width * scale));
+    const height = Math.max(1, Math.round(bitmap.height * scale));
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const context = canvas.getContext("2d", { alpha: false });
+    if (!context) {
+      bitmap.close();
+      return file;
+    }
+    context.drawImage(bitmap, 0, 0, width, height);
+    bitmap.close();
+    const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, "image/webp", 0.82));
+    if (!blob || blob.size >= file.size) return file;
+    return new File([blob], `${file.name.replace(/\.[^.]+$/, "") || "fotografia"}.webp`, { type: "image/webp", lastModified: file.lastModified });
+  } catch {
+    return file;
+  }
+}
+
 export function PrivateBlobUploadField({ accept, fieldName, hasExisting = false, help, kind, label, maxBytes }: Props) {
   const [pathname, setPathname] = useState("");
   const [message, setMessage] = useState(hasExisting ? "Archivo actual conservado." : "");
@@ -38,15 +65,17 @@ export function PrivateBlobUploadField({ accept, fieldName, hasExisting = false,
 
     setUploading(true);
     form?.querySelectorAll<HTMLButtonElement>('button[type="submit"]').forEach(button => { button.disabled = true; });
-    setMessage("Subiendo 0 %…");
+    setMessage(kind === "interventor-photo" ? "Optimizando fotografía…" : "Subiendo 0 %…");
     try {
-      const extension = file.name.split(".").pop()?.replace(/[^a-zA-Z0-9]/g, "").toLowerCase() || "bin";
-      const blob = await upload(`${folders[kind]}/${crypto.randomUUID()}.${extension}`, file, {
+      const uploadFile = kind === "interventor-photo" ? await optimizePhoto(file) : file;
+      const extension = uploadFile.name.split(".").pop()?.replace(/[^a-zA-Z0-9]/g, "").toLowerCase() || "bin";
+      setMessage("Subiendo 0 %…");
+      const blob = await upload(`${folders[kind]}/${crypto.randomUUID()}.${extension}`, uploadFile, {
         access: "private",
         clientPayload: kind,
-        contentType: file.type,
+        contentType: uploadFile.type,
         handleUploadUrl: "/api/admin/uploads",
-        multipart: file.size > 5 * 1024 * 1024,
+        multipart: uploadFile.size > 5 * 1024 * 1024,
         onUploadProgress: ({ percentage }) => setMessage(`Subiendo ${Math.round(percentage)} %…`)
       });
       setPathname(blob.pathname);
