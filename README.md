@@ -38,16 +38,19 @@ SUPERADMIN_EMAIL=correo-del-superadministrador
 SUPERADMIN_PASSWORD=contraseña-larga-y-aleatoria
 DATABASE_HEALTH_WEBHOOK_SECRET=secreto-aleatorio-del-webhook
 NEXT_PUBLIC_SITE_URL=https://su-dominio.com
+SHOW_INTERVENTOR_PHOTOS=true
 ```
 
 `AUTH_SECRET` puede generarse con `openssl rand -base64 48`.
+
+`SHOW_INTERVENTOR_PHOTOS` controla globalmente las fotografías de los interventores. Use `true` para mostrarlas o `false` para sustituirlas por la inicial del nombre en el Directorio, la verificación individual y las credenciales impresas. Al desactivarlas, los archivos permanecen almacenados y pueden volver a mostrarse sin cargarlos de nuevo.
 
 ## Despliegue en Vercel
 
 1. Importe este repositorio en Vercel.
 2. Cree o conecte una base Neon y copie su cadena en `DATABASE_URL`.
 3. Cree un almacén Vercel Blob y confirme que `BLOB_READ_WRITE_TOKEN` esté disponible.
-4. Configure `AUTH_SECRET`, `SETUP_SECRET`, `SUPERADMIN_EMAIL`, `SUPERADMIN_PASSWORD` y `NEXT_PUBLIC_SITE_URL`.
+4. Configure `AUTH_SECRET`, `SETUP_SECRET`, `SUPERADMIN_EMAIL`, `SUPERADMIN_PASSWORD`, `NEXT_PUBLIC_SITE_URL` y `SHOW_INTERVENTOR_PHOTOS`.
 5. Instale dependencias localmente con `npm ci`.
 6. Despliegue el proyecto. El comando de construcción ejecutará automáticamente las migraciones pendientes en Neon antes de compilar la aplicación.
 7. Confirme que el despliegue terminó correctamente.

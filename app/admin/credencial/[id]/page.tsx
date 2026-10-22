@@ -8,12 +8,15 @@ import { interventores } from "@/db/schema";
 import { requireAdmin } from "@/lib/auth";
 import { brandedQrDataUrl } from "@/lib/branded-qr";
 import { siteUrl } from "@/lib/credentials";
+import { showInterventorPhotos } from "@/lib/features";
 
 export default async function CredentialPage({ params }: { params: Promise<{ id: string }> }) {
   await requireAdmin();
   const person = (await db.select().from(interventores).where(eq(interventores.id, Number((await params).id))).limit(1))[0];
   if (!person) notFound();
-  if (person.photoPathname) person.photoUrl = `/api/media/interventores/${person.id}`;
+  const photosEnabled = showInterventorPhotos();
+  if (photosEnabled && person.photoPathname) person.photoUrl = `/api/media/interventores/${person.id}`;
+  if (!photosEnabled) person.photoUrl = null;
   const directoryUrl = `${siteUrl()}/directorio?credencial=${person.verificationHash}`;
   const qrPng = await brandedQrDataUrl(directoryUrl);
 
