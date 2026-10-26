@@ -3,6 +3,7 @@ import { and, asc, count, eq, ilike, or, type SQL } from "drizzle-orm";
 import Image from "next/image";
 import Link from "next/link";
 import { cache } from "react";
+import { AutoSubmitSelect } from "@/components/auto-submit-select";
 import { PageHero } from "@/components/page-hero";
 import { PublicProfile } from "@/components/public-profile";
 import { db } from "@/db";
@@ -108,7 +109,7 @@ export default async function DirectoryPage({ searchParams }: { searchParams: Pr
             <label>Estado<select name="estado" defaultValue={filters.estado}><option value="">Todos los estados</option>{stateRows.map(row => <option value={row.stateName} key={row.stateName}>{row.stateName}</option>)}</select></label>
             <label>Número de identificación<input name="numero" defaultValue={filters.numero} placeholder="Ej. SENIDH-CHIH" maxLength={50}/></label>
             <label>Municipio<input name="municipio" defaultValue={filters.municipio} placeholder="Ej. Cuauhtémoc" maxLength={120}/></label>
-            <label>Ordenar por<select name="orden" defaultValue={filters.orden}><option value="nombre">Nombre A–Z</option><option value="estado">Estado A–Z</option><option value="numero">Identificación</option></select></label>
+            <label>Ordenar por<AutoSubmitSelect name="orden" defaultValue={filters.orden} aria-label="Ordenar el Directorio"><option value="nombre">Nombre A–Z</option><option value="estado">Estado A–Z</option><option value="numero">Identificación</option></AutoSubmitSelect></label>
           </div>
           <div className="filter-actions"><button className="button navy" type="submit">Buscar en el Directorio</button><Link href="/directorio">Limpiar filtros</Link></div>
         </form>

@@ -1,6 +1,7 @@
 import { and, asc, count, desc, eq, ilike, type SQL } from "drizzle-orm";
 import Link from "next/link";
 import { AdminShell } from "@/components/admin-shell";
+import { AutoSubmitSelect } from "@/components/auto-submit-select";
 import { db } from "@/db";
 import { interventores } from "@/db/schema";
 import { revokeInterventor } from "@/lib/actions";
@@ -83,7 +84,7 @@ export default async function InterventoresPage({ searchParams }: { searchParams
           <label>Estado<select name="estado" defaultValue={filters.estado}><option value="">Todos</option>{stateRows.map(row => <option value={row.stateName} key={row.stateName}>{row.stateName}</option>)}</select></label>
           <label>Número<input name="numero" defaultValue={filters.numero} placeholder="Folio" maxLength={50}/></label>
           <label>Estatus<select name="estatus" defaultValue={filters.estatus}><option value="">Todos</option><option value="activa">Activa</option><option value="suspendida">Suspendida</option><option value="revocada">Revocada</option></select></label>
-          <label>Ordenar<select name="orden" defaultValue={filters.orden}><option value="recientes">Más recientes</option><option value="nombre">Nombre A–Z</option><option value="estado">Estado A–Z</option><option value="numero">Identificación</option></select></label>
+          <label>Ordenar<AutoSubmitSelect name="orden" defaultValue={filters.orden} aria-label="Ordenar credenciales"><option value="recientes">Más recientes</option><option value="nombre">Nombre A–Z</option><option value="estado">Estado A–Z</option><option value="numero">Identificación</option></AutoSubmitSelect></label>
         </div>
         <div className="filter-actions"><button className="button navy" type="submit">Filtrar</button><Link href="/admin/interventores">Limpiar</Link></div>
       </form>
