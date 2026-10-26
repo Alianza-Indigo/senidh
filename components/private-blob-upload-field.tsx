@@ -22,6 +22,7 @@ const folders: Record<UploadKind, string> = {
 
 const MAX_PHOTO_WIDTH = 1200;
 const MAX_PHOTO_HEIGHT = 1500;
+const MAX_ORIGINAL_PHOTO_BYTES = 25 * 1024 * 1024;
 
 async function optimizePhoto(file: File) {
   try {
@@ -58,7 +59,11 @@ export function PrivateBlobUploadField({ accept, fieldName, hasExisting = false,
       setMessage(hasExisting ? "Archivo actual conservado." : "");
       return;
     }
-    if (file.size > maxBytes) {
+    if (kind === "interventor-photo" && file.size > MAX_ORIGINAL_PHOTO_BYTES) {
+      setMessage("La fotografía original excede el límite de 25 MB.");
+      return;
+    }
+    if (kind !== "interventor-photo" && file.size > maxBytes) {
       setMessage(`El archivo excede el límite de ${Math.round(maxBytes / 1024 / 1024)} MB.`);
       return;
     }
@@ -68,6 +73,10 @@ export function PrivateBlobUploadField({ accept, fieldName, hasExisting = false,
     setMessage(kind === "interventor-photo" ? "Optimizando fotografía…" : "Subiendo 0 %…");
     try {
       const uploadFile = kind === "interventor-photo" ? await optimizePhoto(file) : file;
+      if (uploadFile.size > maxBytes) {
+        setMessage(`No fue posible reducir el archivo por debajo de ${Math.round(maxBytes / 1024 / 1024)} MB. Use una fotografía JPG, PNG o WebP de menor tamaño.`);
+        return;
+      }
       const extension = uploadFile.name.split(".").pop()?.replace(/[^a-zA-Z0-9]/g, "").toLowerCase() || "bin";
       setMessage("Subiendo 0 %…");
       const blob = await upload(`${folders[kind]}/${crypto.randomUUID()}.${extension}`, uploadFile, {
