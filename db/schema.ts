@@ -37,6 +37,11 @@ export const interventores = pgTable("interventores", {
   uniqueIndex("interventores_hash_unique").on(table.verificationHash),
   uniqueIndex("interventores_curp_unique").on(table.curp),
   index("interventores_name_idx").on(table.fullName),
+  index("interventores_name_search_idx").using("gin", table.fullName.op("gin_trgm_ops")),
+  index("interventores_number_search_idx").using("gin", table.credentialNumber.op("gin_trgm_ops")),
+  index("interventores_municipality_search_idx").using("gin", table.municipality.op("gin_trgm_ops")),
+  index("interventores_state_idx").on(table.stateName),
+  index("interventores_public_directory_idx").on(table.allowGoogleIndexing, table.stateName, table.fullName),
   index("interventores_status_idx").on(table.status)
 ]);
 

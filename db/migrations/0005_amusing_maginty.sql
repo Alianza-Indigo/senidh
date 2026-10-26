@@ -1,0 +1,2 @@
+CREATE INDEX "interventores_state_idx" ON "interventores" USING btree ("state_name");--> statement-breakpoint
+CREATE INDEX "interventores_public_directory_idx" ON "interventores" USING btree ("allow_google_indexing","state_name","full_name");
