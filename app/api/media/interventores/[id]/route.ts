@@ -1,5 +1,5 @@
 import { eq } from "drizzle-orm";
-import { get } from "@vercel/blob";
+import { get, put } from "@vercel/blob";
 import sharp from "sharp";
 import { db } from "@/db";
 import { interventores } from "@/db/schema";
@@ -17,6 +17,18 @@ const variants: Record<InterventorPhotoVariant, { width: number; height: number;
 
 function isVariant(value: string | null): value is InterventorPhotoVariant {
   return value === "directory" || value === "profile" || value === "credential";
+}
+
+function imageResponse(body: BodyInit, size: number, id: number, version: string, variant: InterventorPhotoVariant) {
+  const headers = new Headers({
+    "Content-Type": "image/webp",
+    "Content-Length": String(size),
+    "Cache-Control": "public, max-age=31536000, immutable",
+    "CDN-Cache-Control": "public, max-age=31536000, immutable",
+    "ETag": `W/\"${id}-${version}-${variant}\"`,
+    "X-Content-Type-Options": "nosniff"
+  });
+  return new Response(body, { status: 200, headers });
 }
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -37,6 +49,10 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     return Response.redirect(url, 307);
   }
 
+  const optimizedPathname = `interventores-optimized/${id}/${version}-${variant}.webp`;
+  const optimized = await get(optimizedPathname, { access: "private" });
+  if (optimized?.statusCode === 200) return imageResponse(optimized.stream, optimized.blob.size, id, version, variant);
+
   const result = await get(person.pathname, { access: "private" });
   if (!result || result.statusCode !== 200) return new Response("Archivo no encontrado", { status: 404 });
 
@@ -48,13 +64,11 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     .webp({ quality: settings.quality, effort: 4 })
     .toBuffer();
 
-  const headers = new Headers({
-    "Content-Type": "image/webp",
-    "Content-Length": String(image.byteLength),
-    "Cache-Control": "public, max-age=31536000, immutable",
-    "CDN-Cache-Control": "public, max-age=31536000, immutable",
-    "ETag": `W/\"${id}-${version}-${variant}\"`,
-    "X-Content-Type-Options": "nosniff"
+  await put(optimizedPathname, image, {
+    access: "private",
+    addRandomSuffix: false,
+    allowOverwrite: true,
+    contentType: "image/webp"
   });
-  return new Response(image, { status: 200, headers });
+  return imageResponse(image, image.byteLength, id, version, variant);
 }
