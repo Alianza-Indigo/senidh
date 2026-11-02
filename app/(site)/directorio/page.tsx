@@ -10,6 +10,7 @@ import { db } from "@/db";
 import { interventores } from "@/db/schema";
 import { publicStatus } from "@/lib/credentials";
 import { showInterventorPhotos } from "@/lib/features";
+import { interventorPhotoUrl } from "@/lib/interventor-photo";
 
 const PAGE_SIZE = 24;
 
@@ -118,7 +119,7 @@ export default async function DirectoryPage({ searchParams }: { searchParams: Pr
 
         <div className="directory-grid">{people.map(person => {
           const status = publicStatus(person);
-          const photoSrc = photosEnabled ? (person.photoPathname ? `/api/media/interventores/${person.id}` : person.photoUrl) : null;
+          const photoSrc = photosEnabled ? (person.photoPathname ? interventorPhotoUrl(person.id, person.updatedAt, "directory") : person.photoUrl) : null;
           return <Link className="person-card" href={`/directorio?credencial=${person.verificationHash}`} key={person.id}>{photoSrc ? <Image src={photoSrc} width={92} height={108} alt=""/> : <div className="mini-placeholder">{person.fullName[0]}</div>}<div><span className={`status ${status.tone}`}>{status.label}</span><h2>{person.fullName}</h2><p>{person.roleTitle}</p><small>{[person.municipality, person.stateName].filter(Boolean).join(", ")}</small><small className="person-number">{person.credentialNumber}</small></div></Link>;
         })}</div>
 
