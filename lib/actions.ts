@@ -98,7 +98,7 @@ type InterventorFormState = {
   message: string;
 } | null;
 
-function isUniqueConstraintViolation(error: unknown, constraint: string) {
+function isUniqueConstraintViolation(error: unknown, constraint?: string) {
   const visited = new Set<unknown>();
   let current = error;
 
@@ -107,7 +107,7 @@ function isUniqueConstraintViolation(error: unknown, constraint: string) {
     const details = current as { code?: unknown; constraint?: unknown; message?: unknown; cause?: unknown };
     if (
       details.code === "23505" &&
-      (details.constraint === constraint || String(details.message ?? "").includes(constraint))
+      (!constraint || details.constraint === constraint || String(details.message ?? "").includes(constraint))
     ) return true;
     current = details.cause;
   }
@@ -209,6 +209,52 @@ export async function disableInterventor(formData: FormData) {
   revalidatePath("/identificaciones");
   revalidatePath("/sitemap.xml");
   redirect("/admin/interventores?disabled=1");
+}
+
+export async function restoreInterventor(formData: FormData) {
+  await requireAdmin(); await assertSameOrigin();
+  const parsed = z.object({ id: z.coerce.number().int().positive() }).safeParse(Object.fromEntries(formData));
+  if (!parsed.success) redirect("/admin/interventores/deshabilitados?error=invalid-restore");
+  const person = (await db.select().from(disabledInterventores).where(eq(disabledInterventores.id, parsed.data.id)).limit(1))[0];
+  if (!person) redirect("/admin/interventores/deshabilitados?error=not-found");
+
+  try {
+    await db.batch([
+      db.insert(interventores).values({
+        id: person.originalInterventorId,
+        credentialNumber: person.credentialNumber,
+        verificationHash: person.verificationHash,
+        isForeign: person.isForeign,
+        curp: person.curp,
+        driverLicenseNumber: person.driverLicenseNumber,
+        fullName: person.fullName,
+        roleTitle: person.formerRoleTitle,
+        stateName: person.stateName,
+        municipality: person.municipality,
+        issuedAt: person.issuedAt,
+        expiresAt: person.expiresAt,
+        status: person.formerStatus,
+        photoUrl: person.photoUrl,
+        photoPathname: person.photoPathname,
+        allowGoogleIndexing: person.allowedGoogleIndexing,
+        internalNotes: person.internalNotes,
+        createdAt: person.originalCreatedAt,
+        updatedAt: new Date()
+      }),
+      db.delete(disabledInterventores).where(eq(disabledInterventores.id, person.id))
+    ]);
+  } catch (error) {
+    if (isUniqueConstraintViolation(error)) redirect(`/admin/interventores/deshabilitados?error=conflict&id=${person.id}`);
+    throw error;
+  }
+
+  revalidatePath("/admin");
+  revalidatePath("/admin/interventores");
+  revalidatePath("/admin/interventores/deshabilitados");
+  revalidatePath("/directorio");
+  revalidatePath("/identificaciones");
+  revalidatePath("/sitemap.xml");
+  redirect("/admin/interventores?restored=1");
 }
 
 export async function saveContent(formData: FormData) {

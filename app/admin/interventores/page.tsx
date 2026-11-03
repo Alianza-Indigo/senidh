@@ -12,6 +12,7 @@ const PAGE_SIZE = 50;
 type AdminParams = {
   saved?: string;
   disabled?: string;
+  restored?: string;
   error?: string;
   nombre?: string;
   estado?: string;
@@ -75,6 +76,7 @@ export default async function InterventoresPage({ searchParams }: { searchParams
   return <AdminShell title="Interventores y delegados">
     {params.saved && <div className="alert success">Registro guardado correctamente.</div>}
     {params.disabled && <div className="alert success">Miembro deshabilitado. Su nombramiento y publicación en el Directorio fueron retirados.</div>}
+    {params.restored && <div className="alert success">Miembro reintegrado correctamente. Se restauraron su folio, QR, fotografía, nombramiento y configuración del Directorio.</div>}
     {errorMessage && <div className="alert error">{errorMessage}</div>}
     <section className="admin-card">
       <header className="card-head"><h2>Credenciales registradas</h2><div className="form-actions"><Link href="/admin/interventores/deshabilitados">Ver deshabilitados</Link><Link className="button navy" href="/admin/interventores/nuevo">Nueva credencial</Link></div></header>
