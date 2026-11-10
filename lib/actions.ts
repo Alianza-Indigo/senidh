@@ -142,8 +142,10 @@ export async function saveInterventor(_previousState: InterventorFormState, form
   }
   const old = id ? (await db.select().from(interventores).where(eq(interventores.id, id)).limit(1))[0] : null;
   const photoPathname = uploadedPathname(formData, "photoPathname", "interventores");
+  const voterIdFrontPathname = uploadedPathname(formData, "voterIdFrontPathname", "identificaciones-elector");
+  const voterIdBackPathname = uploadedPathname(formData, "voterIdBackPathname", "identificaciones-elector");
   const personData = parsed.data;
-  const values = { credentialNumber: personData.credentialNumber, fullName: personData.fullName, roleTitle: personData.roleTitle, stateName: personData.stateName, municipality: personData.municipality || null, issuedAt: personData.issuedAt, expiresAt: personData.expiresAt, status: personData.status, internalNotes: personData.internalNotes || null, isForeign, curp: isForeign ? null : personData.curp, driverLicenseNumber: isForeign ? personData.driverLicenseNumber : null, allowGoogleIndexing: formData.get("allowGoogleIndexing") === "on", photoUrl: photoPathname ? null : old?.photoUrl ?? null, photoPathname: photoPathname ?? old?.photoPathname ?? null, updatedAt: new Date() };
+  const values = { credentialNumber: personData.credentialNumber, fullName: personData.fullName, roleTitle: personData.roleTitle, stateName: personData.stateName, municipality: personData.municipality || null, issuedAt: personData.issuedAt, expiresAt: personData.expiresAt, status: personData.status, internalNotes: personData.internalNotes || null, isForeign, curp: isForeign ? null : personData.curp, driverLicenseNumber: isForeign ? personData.driverLicenseNumber : null, allowGoogleIndexing: formData.get("allowGoogleIndexing") === "on", photoUrl: photoPathname ? null : old?.photoUrl ?? null, photoPathname: photoPathname ?? old?.photoPathname ?? null, voterIdFrontPathname: voterIdFrontPathname ?? old?.voterIdFrontPathname ?? null, voterIdBackPathname: voterIdBackPathname ?? old?.voterIdBackPathname ?? null, updatedAt: new Date() };
   try {
     if (old) await db.update(interventores).set(values).where(eq(interventores.id, id));
     else await db.insert(interventores).values({ ...values, verificationHash: verificationCode() });
@@ -154,6 +156,8 @@ export async function saveInterventor(_previousState: InterventorFormState, form
     throw error;
   }
   if (photoPathname && old?.photoPathname && old.photoPathname !== photoPathname) await del(old.photoPathname).catch(() => undefined);
+  if (voterIdFrontPathname && old?.voterIdFrontPathname && old.voterIdFrontPathname !== voterIdFrontPathname) await del(old.voterIdFrontPathname).catch(() => undefined);
+  if (voterIdBackPathname && old?.voterIdBackPathname && old.voterIdBackPathname !== voterIdBackPathname) await del(old.voterIdBackPathname).catch(() => undefined);
   revalidatePath("/admin/interventores"); revalidatePath("/directorio"); revalidatePath("/identificaciones");
   redirect("/admin/interventores?saved=1");
 }
@@ -191,6 +195,8 @@ export async function disableInterventor(formData: FormData) {
       formerStatus: person.status,
       photoUrl: person.photoUrl,
       photoPathname: person.photoPathname,
+      voterIdFrontPathname: person.voterIdFrontPathname,
+      voterIdBackPathname: person.voterIdBackPathname,
       allowedGoogleIndexing: person.allowGoogleIndexing,
       internalNotes: person.internalNotes,
       disabledReason: parsed.data.reason || null,
@@ -236,6 +242,8 @@ export async function restoreInterventor(formData: FormData) {
         status: person.formerStatus,
         photoUrl: person.photoUrl,
         photoPathname: person.photoPathname,
+        voterIdFrontPathname: person.voterIdFrontPathname,
+        voterIdBackPathname: person.voterIdBackPathname,
         allowGoogleIndexing: person.allowedGoogleIndexing,
         internalNotes: person.internalNotes,
         createdAt: person.originalCreatedAt,

@@ -9,6 +9,11 @@ const uploadRules = {
     allowedContentTypes: ["image/jpeg", "image/png", "image/webp"],
     maximumSizeInBytes: 4 * 1024 * 1024
   },
+  "voter-id-image": {
+    folder: "identificaciones-elector",
+    allowedContentTypes: ["image/jpeg", "image/png", "image/webp"],
+    maximumSizeInBytes: 4 * 1024 * 1024
+  },
   "content-document": {
     folder: "documentos",
     allowedContentTypes: ["application/pdf", "image/jpeg", "image/png", "image/webp"],

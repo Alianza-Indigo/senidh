@@ -3,12 +3,13 @@
 import { upload } from "@vercel/blob/client";
 import { useState } from "react";
 
-type UploadKind = "interventor-photo" | "content-document";
+type UploadKind = "interventor-photo" | "voter-id-image" | "content-document";
 
 type Props = {
   accept: string;
   fieldName: string;
   hasExisting?: boolean;
+  existingUrl?: string;
   help: string;
   kind: UploadKind;
   label: string;
@@ -17,6 +18,7 @@ type Props = {
 
 const folders: Record<UploadKind, string> = {
   "interventor-photo": "interventores",
+  "voter-id-image": "identificaciones-elector",
   "content-document": "documentos"
 };
 
@@ -48,7 +50,11 @@ async function optimizePhoto(file: File) {
   }
 }
 
-export function PrivateBlobUploadField({ accept, fieldName, hasExisting = false, help, kind, label, maxBytes }: Props) {
+function isOptimizableImage(kind: UploadKind) {
+  return kind === "interventor-photo" || kind === "voter-id-image";
+}
+
+export function PrivateBlobUploadField({ accept, fieldName, hasExisting = false, existingUrl, help, kind, label, maxBytes }: Props) {
   const [pathname, setPathname] = useState("");
   const [message, setMessage] = useState(hasExisting ? "Archivo actual conservado." : "");
   const [uploading, setUploading] = useState(false);
@@ -59,20 +65,20 @@ export function PrivateBlobUploadField({ accept, fieldName, hasExisting = false,
       setMessage(hasExisting ? "Archivo actual conservado." : "");
       return;
     }
-    if (kind === "interventor-photo" && file.size > MAX_ORIGINAL_PHOTO_BYTES) {
-      setMessage("La fotografía original excede el límite de 25 MB.");
+    if (isOptimizableImage(kind) && file.size > MAX_ORIGINAL_PHOTO_BYTES) {
+      setMessage("La imagen original excede el límite de 25 MB.");
       return;
     }
-    if (kind !== "interventor-photo" && file.size > maxBytes) {
+    if (!isOptimizableImage(kind) && file.size > maxBytes) {
       setMessage(`El archivo excede el límite de ${Math.round(maxBytes / 1024 / 1024)} MB.`);
       return;
     }
 
     setUploading(true);
     form?.querySelectorAll<HTMLButtonElement>('button[type="submit"]').forEach(button => { button.disabled = true; });
-    setMessage(kind === "interventor-photo" ? "Optimizando fotografía…" : "Subiendo 0 %…");
+    setMessage(isOptimizableImage(kind) ? "Optimizando imagen…" : "Subiendo 0 %…");
     try {
-      const uploadFile = kind === "interventor-photo" ? await optimizePhoto(file) : file;
+      const uploadFile = isOptimizableImage(kind) ? await optimizePhoto(file) : file;
       if (uploadFile.size > maxBytes) {
         setMessage(`No fue posible reducir el archivo por debajo de ${Math.round(maxBytes / 1024 / 1024)} MB. Use una fotografía JPG, PNG o WebP de menor tamaño.`);
         return;
@@ -105,6 +111,6 @@ export function PrivateBlobUploadField({ accept, fieldName, hasExisting = false,
       onChange={event => void selectFile(event.currentTarget.files?.[0], event.currentTarget.form)}
     />
     <input name={fieldName} type="hidden" value={pathname}/>
-    <small>{message || help}</small>
+    <small>{message || help}{hasExisting && existingUrl && <><br/><a href={existingUrl} target="_blank" rel="noreferrer">Ver archivo actual ↗</a></>}</small>
   </label>;
 }

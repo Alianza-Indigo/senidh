@@ -50,6 +50,13 @@
       "when": 1793043734481,
       "tag": "0006_bored_freak",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1794336802440,
+      "tag": "0007_milky_toad",
+      "breakpoints": true
     }
   ]
 }
