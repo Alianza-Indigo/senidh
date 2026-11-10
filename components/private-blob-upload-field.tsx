@@ -26,25 +26,30 @@ const MAX_PHOTO_WIDTH = 1200;
 const MAX_PHOTO_HEIGHT = 1500;
 const MAX_ORIGINAL_PHOTO_BYTES = 25 * 1024 * 1024;
 
-async function optimizePhoto(file: File) {
+async function optimizePhoto(file: File, maximumSizeInBytes: number) {
   try {
     const bitmap = await createImageBitmap(file);
     const scale = Math.min(1, MAX_PHOTO_WIDTH / bitmap.width, MAX_PHOTO_HEIGHT / bitmap.height);
-    const width = Math.max(1, Math.round(bitmap.width * scale));
-    const height = Math.max(1, Math.round(bitmap.height * scale));
+    let width = Math.max(1, Math.round(bitmap.width * scale));
+    let height = Math.max(1, Math.round(bitmap.height * scale));
     const canvas = document.createElement("canvas");
-    canvas.width = width;
-    canvas.height = height;
-    const context = canvas.getContext("2d", { alpha: false });
-    if (!context) {
-      bitmap.close();
-      return file;
+    let optimized: Blob | null = null;
+
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      canvas.width = width;
+      canvas.height = height;
+      const context = canvas.getContext("2d", { alpha: false });
+      if (!context) break;
+      context.drawImage(bitmap, 0, 0, width, height);
+      optimized = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, "image/webp", 0.82 - attempt * 0.07));
+      if (!optimized || optimized.size <= maximumSizeInBytes) break;
+      const reduction = Math.max(0.72, Math.min(0.92, Math.sqrt(maximumSizeInBytes / optimized.size) * 0.94));
+      width = Math.max(720, Math.round(width * reduction));
+      height = Math.max(1, Math.round(height * reduction));
     }
-    context.drawImage(bitmap, 0, 0, width, height);
     bitmap.close();
-    const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, "image/webp", 0.82));
-    if (!blob || blob.size >= file.size) return file;
-    return new File([blob], `${file.name.replace(/\.[^.]+$/, "") || "fotografia"}.webp`, { type: "image/webp", lastModified: file.lastModified });
+    if (!optimized || optimized.size >= file.size) return file;
+    return new File([optimized], `${file.name.replace(/\.[^.]+$/, "") || "fotografia"}.webp`, { type: "image/webp", lastModified: file.lastModified });
   } catch {
     return file;
   }
@@ -78,7 +83,7 @@ export function PrivateBlobUploadField({ accept, fieldName, hasExisting = false,
     form?.querySelectorAll<HTMLButtonElement>('button[type="submit"]').forEach(button => { button.disabled = true; });
     setMessage(isOptimizableImage(kind) ? "Optimizando imagen…" : "Subiendo 0 %…");
     try {
-      const uploadFile = isOptimizableImage(kind) ? await optimizePhoto(file) : file;
+      const uploadFile = isOptimizableImage(kind) ? await optimizePhoto(file, maxBytes) : file;
       if (uploadFile.size > maxBytes) {
         setMessage(`No fue posible reducir el archivo por debajo de ${Math.round(maxBytes / 1024 / 1024)} MB. Use una fotografía JPG, PNG o WebP de menor tamaño.`);
         return;

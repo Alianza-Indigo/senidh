@@ -12,7 +12,7 @@ const uploadRules = {
   "voter-id-image": {
     folder: "identificaciones-elector",
     allowedContentTypes: ["image/jpeg", "image/png", "image/webp"],
-    maximumSizeInBytes: 4 * 1024 * 1024
+    maximumSizeInBytes: 1024 * 1024
   },
   "content-document": {
     folder: "documentos",
